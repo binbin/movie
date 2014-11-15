@@ -15,7 +15,7 @@ from django.utils.encoding import smart_str, smart_unicode
 socket.setdefaulttimeout(120)  
 
 list_pattern=re.compile(r'<a.+?href="show.php\?hash=(\w+)" target="_blank">(.*?)</a>', re.S)
-page_pattern=re.compile(r'<a.+?href="(.*?)">普通下载</a>', re.U)   
+page_pattern=re.compile(r'<a.+?href="(down.*?)">普通下载</a>', re.U)   
 error_file_list=[]
 filelist=[]
 class Conn(object):  
@@ -56,8 +56,29 @@ def download_torrent(url,name,times=0):
           else:
               # print '重试超过20次,退出'
               error_file_list.append(url)
+
+def get_down_url(url,times=0):
+      for i in range(20):
+        try:
+          page=c.request(url)
+          m=re.search(page_pattern, page)
+          return r'http://www.bestxl.com/%s'%m.group(1).replace(r'amp;','')
+        except  Exception, e: 
+          continue
+        error_file_list.push(url)
+        return False
+      '''try:
+        page=c.request(url)
+        m=re.search(page_pattern, page)
+        return r'http://www.bestxl.com/%s'%m.group(1).replace(r'amp;','')
+      except  Exception, e: 
+        if times <20:
+          return get_down_url(url,times+1)
+        else:  
+          print r'分析失败%s'%(r'http://www.bestxl.com/show.php?hash=%s'%i[0]) 
+          return False'''   
          
-def  into_list_page(url,s):
+def into_list_page(url,s):
           c=Conn()
           # print r'进入第%s页'%i
           list_page=c.request(url)
@@ -66,10 +87,23 @@ def  into_list_page(url,s):
           # print r'第%s页分析完毕,共%s个下载,下载开始'%(i,len(l))
           for i in l:
                 # print r'开始载入%s'%(r'http://www.bestxl.com/show.php?hash=%s'%i[0])
+                '''
                 page=c.request(r'http://www.bestxl.com/show.php?hash=%s'%i[0])
                 # print r'载入完毕%s'%(r'http://www.bestxl.com/show.php?hash=%s'%i[0])
-                m=re.search(page_pattern, page)
-                downurl=r'http://www.bestxl.com/%s'%m.group(1).replace(r'amp;','')
+                
+                try:
+                  m=re.search(page_pattern, page)
+                  downurl=r'http://www.bestxl.com/%s'%m.group(1).replace(r'amp;','')
+                except  Exception, e: 
+                  print r'分析失败%s'%(r'http://www.bestxl.com/show.php?hash=%s'%i[0]) 
+                  continue
+                '''
+
+                downurl = get_down_url(r'http://www.bestxl.com/show.php?hash=%s'%i[0],0)
+
+                if  downurl is False:
+                  continue
+
                 # print r'分析完毕%s'%(r'http://www.bestxl.com/show.php?hash=%s'%i[0])
                 name=i[1].strip().replace(r'<span style="color:red;font-weight:bold;">','').replace(r'<span style="color:green;font-weight:bold;">',r'').replace(r'<span style="color:blue;font-weight:bold;">',r'').replace(r'</span>','').replace(r'/',r'  ').replace(r'\\',r'  ')
                 pos=1
@@ -85,8 +119,8 @@ def  into_list_page(url,s):
 if __name__ == '__main__':  
         start=time.time()
         threads=[]
-        for  i in range(1,41):
-                threads.append(threading.Thread(target=into_list_page,args=(r'http://www.bestxl.com/index.php?sort_id=36&page=%s'%i,i)))
+        for  i in range(1,5):
+                threads.append(threading.Thread(target=into_list_page,args=(r'http://www.bestxl.com/index.php?sort_id=40&page=%s'%i,i)))
         for i in threads:
               i.start()
         while reduce(lambda x,y:x or y,[ i.isAlive() for i in threads]):
