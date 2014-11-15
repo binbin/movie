@@ -15,7 +15,7 @@ from django.utils.encoding import smart_str, smart_unicode
 socket.setdefaulttimeout(120)  
 
 list_pattern=re.compile(r'<a.+?href="show.php\?hash=(\w+)" target="_blank">(.*?)</a>', re.S)
-page_pattern=re.compile(r'<a.+?href="(.*?)">普通下载</a>', re.U)   
+page_pattern=re.compile(r'<a.+?href="(.*?)">普通下载</a>', re.U)  
 error_file_list=[]
 filelist=[]
 class Conn(object):  
@@ -57,23 +57,29 @@ def download_torrent(url,name,times=0):
               # print '重试超过20次,退出'
               error_file_list.append(url)
 
-def get_down_url(url,times=0):
+def get_down_url(c,url,times=0):
+      '''page=c.request(url)
+      m=re.search(page_pattern, page)
+      return r'http://www.bestxl.com/%s'%m.group(1).replace(r'amp;','')'''
+      downurl = False
       for i in range(20):
         try:
           page=c.request(url)
           m=re.search(page_pattern, page)
-          return r'http://www.bestxl.com/%s'%m.group(1).replace(r'amp;','')
+          downurl = r'http://www.bestxl.com/%s'%m.group(1).replace(r'amp;','')
         except  Exception, e: 
           continue
-        error_file_list.push(url)
-        return False
-      '''try:
+        if not downurl:
+          error_file_list.push(url)
+        return downurl
+   
+      '''try:#子线程中不能用递归
         page=c.request(url)
         m=re.search(page_pattern, page)
         return r'http://www.bestxl.com/%s'%m.group(1).replace(r'amp;','')
       except  Exception, e: 
         if times <20:
-          return get_down_url(url,times+1)
+          return get_down_url(c,url,times+1)
         else:  
           print r'分析失败%s'%(r'http://www.bestxl.com/show.php?hash=%s'%i[0]) 
           return False'''   
@@ -99,9 +105,9 @@ def into_list_page(url,s):
                   continue
                 '''
 
-                downurl = get_down_url(r'http://www.bestxl.com/show.php?hash=%s'%i[0],0)
+                downurl = get_down_url(c,r'http://www.bestxl.com/show.php?hash=%s'%i[0],0)
 
-                if  downurl is False:
+                if not  downurl:
                   continue
 
                 # print r'分析完毕%s'%(r'http://www.bestxl.com/show.php?hash=%s'%i[0])
