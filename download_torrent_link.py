@@ -15,7 +15,7 @@ from django.utils.encoding import smart_str, smart_unicode
 socket.setdefaulttimeout(120)  
 
 list_pattern=re.compile(r'<a.+?href="show.php\?hash=(\w+)" target="_blank">(.*?)</a>', re.S)
-page_pattern=re.compile(r'<a.+?href="(down.*?)">普通下载</a>', re.U)   
+page_pattern=re.compile(r'<a.+?href="(.*?)">普通下载</a>', re.U)   
 error_file_list=[]
 filelist=[]
 class Conn(object):  
